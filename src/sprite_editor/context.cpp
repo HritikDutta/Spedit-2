@@ -137,6 +137,6 @@ void context_update_on_image_load(Context& ctx, const String filepath, const Tex
     }
 
     {   // Reset any control states
-        ctx.is_dragging = ctx.is_holding_lmb = false;
+        ctx.input_state = EditorInputState::NONE;
     }
 }

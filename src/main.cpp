@@ -26,48 +26,54 @@ void on_update(Application& app)
         return;
     }
 
-    {   // Move image
+    {   // Drag Image
         if (Input::get_mouse_button(MouseButton::MIDDLE))
         {
-            if (!ctx.is_dragging)
+            if (ctx.input_state == EditorInputState::NONE)
             {
-                ctx.drag_start_image_top_left = ctx.image_top_left;
-                ctx.drag_start_position = Input::mouse_position();
-                ctx.is_dragging = true;
+                ctx.drag_image.start_image_top_left = ctx.image_top_left;
+                ctx.drag_image.start_position = Input::mouse_position();
+                ctx.input_state = EditorInputState::DRAG_IMAGE;
             }
 
-            Vector2 diff = Input::mouse_position() - ctx.drag_start_position;
-            ctx.image_top_left = ctx.drag_start_image_top_left + diff;
+            if (ctx.input_state == EditorInputState::DRAG_IMAGE)
+            {
+                Vector2 diff = Input::mouse_position() - ctx.drag_image.start_position;
+                ctx.image_top_left = ctx.drag_image.start_image_top_left + diff;
+            }
         }
-        else if (ctx.is_dragging)
-            ctx.is_dragging = false;
+        else if (ctx.input_state == EditorInputState::DRAG_IMAGE)
+            ctx.input_state = EditorInputState::NONE;
     }
 
     {   // Create Sprites
         if (Input::get_mouse_button(MouseButton::LEFT))
         {
-            if (!ctx.is_holding_lmb)
+            if (ctx.input_state == EditorInputState::NONE)
             {
-                ctx.lmb_start_position = Input::mouse_position() - ctx.image_top_left;
-                ctx.is_holding_lmb = true;
+                ctx.create_sprite.start_position = Input::mouse_position() - ctx.image_top_left;
+                ctx.input_state = EditorInputState::CREATE_SPRITE;
             }
-            
-            const Vector2 mouse_position = Input::mouse_position() - ctx.image_top_left;
-            ctx.lmb_hold_rect.left   = min(mouse_position.x, ctx.lmb_start_position.x) / ctx.image_scale;
-            ctx.lmb_hold_rect.right  = max(mouse_position.x, ctx.lmb_start_position.x) / ctx.image_scale;
-            ctx.lmb_hold_rect.top    = min(mouse_position.y, ctx.lmb_start_position.y) / ctx.image_scale;
-            ctx.lmb_hold_rect.bottom = max(mouse_position.y, ctx.lmb_start_position.y) / ctx.image_scale;
 
-            const f32 width  = texture_get_width(ctx.background_image);
-            const f32 height = texture_get_height(ctx.background_image);
+            if (ctx.input_state == EditorInputState::CREATE_SPRITE)            
+            {
+                const Vector2 mouse_position = Input::mouse_position() - ctx.image_top_left;
+                ctx.create_sprite.sprite_rect.left   = min(mouse_position.x, ctx.create_sprite.start_position.x) / ctx.image_scale;
+                ctx.create_sprite.sprite_rect.right  = max(mouse_position.x, ctx.create_sprite.start_position.x) / ctx.image_scale;
+                ctx.create_sprite.sprite_rect.top    = min(mouse_position.y, ctx.create_sprite.start_position.y) / ctx.image_scale;
+                ctx.create_sprite.sprite_rect.bottom = max(mouse_position.y, ctx.create_sprite.start_position.y) / ctx.image_scale;
 
-            ctx.lmb_hold_rect.left    = roundf(clamp(ctx.lmb_hold_rect.left,   0.0f, width) - 0.35f);
-            ctx.lmb_hold_rect.top     = roundf(clamp(ctx.lmb_hold_rect.top,    0.0f, height) - 0.35f);
-            ctx.lmb_hold_rect.right   = roundf(clamp(ctx.lmb_hold_rect.right,  0.0f, width) - 0.35f);
-            ctx.lmb_hold_rect.bottom  = roundf(clamp(ctx.lmb_hold_rect.bottom, 0.0f, height) - 0.35f);
+                const f32 width  = texture_get_width(ctx.background_image);
+                const f32 height = texture_get_height(ctx.background_image);
+
+                ctx.create_sprite.sprite_rect.left    = roundf(clamp(ctx.create_sprite.sprite_rect.left,   0.0f, width) - 0.35f);
+                ctx.create_sprite.sprite_rect.top     = roundf(clamp(ctx.create_sprite.sprite_rect.top,    0.0f, height) - 0.35f);
+                ctx.create_sprite.sprite_rect.right   = roundf(clamp(ctx.create_sprite.sprite_rect.right,  0.0f, width) - 0.35f);
+                ctx.create_sprite.sprite_rect.bottom  = roundf(clamp(ctx.create_sprite.sprite_rect.bottom, 0.0f, height) - 0.35f);
+            }
         }
-        else if (ctx.is_holding_lmb)
-            ctx.is_holding_lmb = false;
+        else if (ctx.input_state == EditorInputState::CREATE_SPRITE)
+            ctx.input_state = EditorInputState::NONE;
     }
 }
 
@@ -95,9 +101,9 @@ void on_render(Application& app)
     }
 
     {   // Show LMB hold rect for new sprites
-        if (ctx.is_holding_lmb)
+        if (ctx.input_state == EditorInputState::CREATE_SPRITE)
         {
-            Imgui::render_rect(ctx.lmb_hold_rect, z, Vector4 { 1.0f, 0.25f, 0.25f, 0.25f });
+            Imgui::render_rect(ctx.create_sprite.sprite_rect, z, Vector4 { 1.0f, 0.25f, 0.25f, 0.25f });
             z -= 0.001f;
         }
     }

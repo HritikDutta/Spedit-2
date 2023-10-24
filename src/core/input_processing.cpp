@@ -18,7 +18,7 @@ struct MouseState
     bool center_cursor = false;
 };
 
-struct InputState
+struct EditorInputState
 {
     KeyboardState keyboard_state;
     MouseState mouse_state;
@@ -30,8 +30,8 @@ struct InputEvents
     DynamicArray<MouseScrollCallback> mouse_scroll_callbacks;
 };
 
-static InputState current_input_state  = {};
-static InputState previous_input_state = {};
+static EditorInputState current_input_state  = {};
+static EditorInputState previous_input_state = {};
 static InputEvents input_events;
 
 static bool had_focus = true;
@@ -64,7 +64,7 @@ inline void input_get_state(Application& app)
 
 inline void input_state_update(Application& app)
 {
-    platform_copy_memory(&previous_input_state, &current_input_state, sizeof(InputState));
+    platform_copy_memory(&previous_input_state, &current_input_state, sizeof(EditorInputState));
     
     if (current_input_state.mouse_state.center_cursor)
     {

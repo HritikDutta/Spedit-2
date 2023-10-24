@@ -8,7 +8,7 @@ void on_mouse_scroll(Application &app, s32 scroll)
 {
     Context& ctx = *(Context*) app.data;
     
-    if (ctx.is_dragging)
+    if (ctx.input_state == EditorInputState::DRAG_IMAGE)
         return;
 
     Vector2 mouse_pos = Input::mouse_position();
