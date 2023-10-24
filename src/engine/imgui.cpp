@@ -61,7 +61,7 @@ static struct
 
     Vector4 offset_v2;  // x,z and y,w are the same
     Vector4 scale_v2;   // x,z and y,w are the same
-    Rect    window_bounds;
+    Rect    window_bounds;  // TODO: This should be a stack
 
     Vertex* batch_shared_buffer = nullptr;
 
@@ -604,6 +604,11 @@ static void push_ui_rect(ImguiBatchData& batch, const Rect& rect, f32 z, const V
     batch.elem_count++;
 }
 
+Rect get_window_bounds()
+{
+    return ui_data.window_bounds;
+}
+
 void set_offset(f32 x, f32 y)
 {
     ui_data.offset_v2 = Vector4 { x, y, x, y };
@@ -675,14 +680,15 @@ void render_image(const Image& image, const Vector2& top_left, f32 z, const Vect
 void render_sprite(const Sprite& sprite, const Vector2& position, f32 z, const Vector2& scale, const Vector4& tint)
 {
     const Vector4 tex_coords = Vector4 { 0.0f, 1.0f, 1.0f, 0.0f };
+    const SpriteSheet::SpriteData data = sprite.sprite_sheet.sprites[sprite.sprite_index];
 
     Rect sprite_rect;
-    sprite_rect.left   = position.x - scale.x * sprite.size.x * sprite.pivot.x;
-    sprite_rect.right  = position.x + scale.x * sprite.size.x * (1.0f - sprite.pivot.x);
-    sprite_rect.top    = position.y - scale.y * sprite.size.y * (1.0f - sprite.pivot.y);
-    sprite_rect.bottom = position.y + scale.y * sprite.size.y * sprite.pivot.y;
+    sprite_rect.left   = position.x - scale.x * data.size.x * data.pivot.x;
+    sprite_rect.right  = position.x + scale.x * data.size.x * (1.0f - data.pivot.x);
+    sprite_rect.top    = position.y - scale.y * data.size.y * (1.0f - data.pivot.y);
+    sprite_rect.bottom = position.y + scale.y * data.size.y * data.pivot.y;
 
-    push_ui_rect(ui_data.quad_batch, sprite_rect, z, sprite.tex_coords.v4, sprite.atlas, tint);
+    push_ui_rect(ui_data.quad_batch, sprite_rect, z, data.tex_coords.v4, sprite.sprite_sheet.atlas, tint);
 }
 
 bool render_button(ID id, const Rect& rect, f32 z, const Vector4& default_color, const Vector4& hover_color, const Vector4& pressed_color)

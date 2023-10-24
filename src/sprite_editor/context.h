@@ -2,8 +2,9 @@
 
 #include "containers/string.h"
 #include "engine/imgui.h"
-#include "math/vecs/vector2.h"
 #include "engine/rect.h"
+#include "engine/sprite.h"
+#include "math/vecs/vector2.h"
 
 enum struct EditorInputState
 {
@@ -21,8 +22,10 @@ struct Context
 
     // Can change based on image
     Imgui::Image background_image = {};
-    Imgui::Image sprite_sheet = {};
     String filename = {};
+
+    SpriteSheet sprite_sheet = {};
+    DynamicArray<Animation2D> animations = {};
 
     // State
     Vector2 image_top_left;
@@ -43,6 +46,8 @@ struct Context
             Rect    sprite_rect;
         } create_sprite;
     };
+
+    s32 selected_sprite_index = -1;
 };
 
 bool context_init(Context& ctx, const Application& app);

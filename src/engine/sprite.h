@@ -6,12 +6,23 @@
 #include "math/vecs/vector2.h"
 #include "rect.h"
 
+struct SpriteSheet
+{
+    struct SpriteData
+    {
+        Rect tex_coords;
+        Vector2 size;
+        Vector2 pivot;
+    };
+
+    Texture atlas = {};
+    DynamicArray<SpriteData> sprites = {};
+};
+
 struct Sprite
 {
-    Texture atlas;
-    Rect tex_coords;
-    Vector2 size;
-    Vector2 pivot;
+    SpriteSheet sprite_sheet;
+    s64 sprite_index;
 };
 
 struct Animation2D
@@ -37,6 +48,8 @@ struct Animation2D
     f32 frame_rate;
     LoopType loop_type;
 };
+
+void free(SpriteSheet& sprite_sheet);
 
 void animation_instance_start(Animation2D::Instance& instance, f32 time);
 void animation_instance_step(const Animation2D& animation, Animation2D::Instance& instance, f32 time);

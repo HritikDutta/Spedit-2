@@ -58,7 +58,7 @@ bool context_init(Context& ctx, const Application& app)
         }
 
         ctx.background_image = texture_load_pixels(ref("background"), pixels, width, height, 4, TextureSettings::default());
-        ctx.sprite_sheet = texture_load_pixels(ref("sprite sheet"), nullptr, 0, 0, 4, TextureSettings::default());
+        ctx.sprite_sheet.atlas = texture_load_pixels(ref("sprite sheet"), nullptr, 0, 0, 4, TextureSettings::default());
 
         platform_free(pixels);
     }
@@ -73,6 +73,11 @@ bool context_init(Context& ctx, const Application& app)
         string_copy_into(ctx.filename, ref("Empty"));
     }
 
+    {   // Initialize structs for spritesheet and animation
+        ctx.sprite_sheet.sprites = make<DynamicArray<SpriteSheet::SpriteData>>();
+        ctx.animations = make<DynamicArray<Animation2D>>();
+    }
+
     return true;
 }
 
@@ -85,7 +90,7 @@ void context_free(Context &ctx)
 
 void context_update_on_image_load(Context& ctx, const String filepath, const TextureSettings settings)
 {
-    texture_set_pixels_from_image(ctx.sprite_sheet, filepath, TextureSettings::default());
+    texture_set_pixels_from_image(ctx.sprite_sheet.atlas, filepath, TextureSettings::default());
 
     {   // Save file name separately
         s64 last_slash_idx = filepath.size - 1;
@@ -98,8 +103,8 @@ void context_update_on_image_load(Context& ctx, const String filepath, const Tex
         string_copy_into(ctx.filename, get_substring(filepath, start_idx));
     }
     
-    const s32 width  = texture_get_width(ctx.sprite_sheet);
-    const s32 height = texture_get_height(ctx.sprite_sheet);
+    const s32 width  = texture_get_width(ctx.sprite_sheet.atlas);
+    const s32 height = texture_get_height(ctx.sprite_sheet.atlas);
 
     {   // Resize background
         u8* pixels = (u8*) platform_allocate(width * height * 4 * sizeof(u8));
@@ -134,6 +139,15 @@ void context_update_on_image_load(Context& ctx, const String filepath, const Tex
         const Application& app = application_get_active();
         ctx.image_top_left.x = 0.5f * (app.window.ref_width  - width * ctx.image_scale);
         ctx.image_top_left.y = 0.5f * (app.window.ref_height - height * ctx.image_scale);
+    }
+
+    {   // Reset sprite sheet and animation data
+        clear(ctx.sprite_sheet.sprites);
+
+        for (u64 i = 0; i < ctx.animations.size; i++)
+            free(ctx.animations[i]);
+
+        clear(ctx.animations);
     }
 
     {   // Reset any control states

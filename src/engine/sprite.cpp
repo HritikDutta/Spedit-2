@@ -6,7 +6,12 @@
 #include "math/common.h"
 #include "rect.h"
 
-void animation_instance_start(Animation2D::Instance& instance, f32 time)
+void free(SpriteSheet &sprite_sheet)
+{
+    free(sprite_sheet.sprites);
+}
+
+void animation_instance_start(Animation2D::Instance &instance, f32 time)
 {
     instance.current_frame_index = 0;
     instance.start_time = time;

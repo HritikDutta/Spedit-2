@@ -4,6 +4,8 @@
 #include "core/input.h"
 #include "engine/rect.h"
 #include "sprite_editor/input_callbacks.h"
+#include "engine/sprite.h"
+#include "sprite_editor/editor.h"
 
 bool on_init(Application& app)
 {
@@ -47,7 +49,7 @@ void on_update(Application& app)
     }
 
     {   // Create Sprites
-        if (Input::get_mouse_button(MouseButton::LEFT))
+        if (Input::get_key(Key::CONTROL) && Input::get_mouse_button(MouseButton::LEFT))
         {
             if (ctx.input_state == EditorInputState::NONE)
             {
@@ -73,7 +75,12 @@ void on_update(Application& app)
             }
         }
         else if (ctx.input_state == EditorInputState::CREATE_SPRITE)
+        {
+            // Add sprite to spritesheet
+            SpriteSheet::SpriteData data = {};  // TODO: Fill this before appending
+            append(ctx.sprite_sheet.sprites, data);
             ctx.input_state = EditorInputState::NONE;
+        }
     }
 }
 
@@ -83,7 +90,7 @@ void on_render(Application& app)
 
     Imgui::begin();
     f32 z = 0.1f;
-    
+
     Imgui::set_scale(ctx.image_scale, ctx.image_scale);
     Imgui::set_offset(ctx.image_top_left.x, ctx.image_top_left.y);
 
@@ -93,9 +100,9 @@ void on_render(Application& app)
     }
 
     {   // Show sprite sheet
-        if (texture_is_valid(ctx.sprite_sheet))
+        if (texture_is_valid(ctx.sprite_sheet.atlas))
         {
-            Imgui::render_image(ctx.sprite_sheet, Vector2 {}, z);
+            Imgui::render_image(ctx.sprite_sheet.atlas, Vector2 {}, z);
             z -= 0.001f;
         }
     }
@@ -159,6 +166,8 @@ void on_render(Application& app)
 
             top_left.y = rect.bottom + padding_y;
         }
+
+        render_sprite_list(app, ctx, z);
     }
 
     Imgui::end();
@@ -184,6 +193,8 @@ void create_app(Application& app)
         app.window.name = ref("Spedit 2");
         app.window.style = WindowStyle::WINDOWED;
         app.window.icon_path = ref("assets/art/app_icon.png");
+
+        app.window.ref_height = 1080;
     }
 
     {   // Callbacks

@@ -107,4 +107,6 @@ inline static void debug_msg_internal(FILE* filestream, const char* label, const
 #define gn_warn(msg, ...)
 #define gn_warn_if(cond, msg, ...)          (cond)
 
+#define gn_break_point()
+
 #endif // GN_RELEASE
