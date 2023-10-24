@@ -70,10 +70,28 @@ void on_update(Application& app)
         }
         else if (ctx.input_state == EditorInputState::CREATE_SPRITE)
         {
-            // Add sprite to spritesheet
-            SpriteSheet::SpriteData data = {};  // TODO: Fill this before appending
-            append(ctx.sprite_sheet.sprites, data);
+            // Add sprite to spritesheet if the rect is valid
+            if (ctx.create_sprite.sprite_rect.left < ctx.create_sprite.sprite_rect.right &&
+                ctx.create_sprite.sprite_rect.top  < ctx.create_sprite.sprite_rect.bottom)
+            {
+                SpriteSheet::SpriteData data = {};
+
+                data.pivot = Vector2 { 0.5f, 0.5f };
+                data.tex_coords = ctx.create_sprite.sprite_rect;
+                data.size = Vector2 { data.tex_coords.right - data.tex_coords.left, data.tex_coords.bottom - data.tex_coords.top };
+
+                append(ctx.sprite_sheet.sprites, data);
+            }
+
             ctx.input_state = EditorInputState::NONE;
+        }
+    }
+
+    {   // Controls for selected sprite
+        if (ctx.selected_sprite_index >= 0 && Input::get_key_down(Key::DELETE))
+        {
+            remove(ctx.sprite_sheet.sprites, ctx.selected_sprite_index);
+            ctx.selected_sprite_index = -1;
         }
     }
 }
@@ -105,6 +123,20 @@ void on_render(Application& app)
         if (ctx.input_state == EditorInputState::CREATE_SPRITE)
         {
             Imgui::render_rect(ctx.create_sprite.sprite_rect, z, Vector4 { 1.0f, 0.25f, 0.25f, 0.25f });
+            z -= 0.001f;
+        }
+    }
+
+    {   // Render the existing sprites
+        for (int i = 0; i < ctx.sprite_sheet.sprites.size; i++)
+        {
+            Vector4 color = Vector4 { 1.0f, 0.2f, 0.2f, 0.25f };
+            if (i == ctx.selected_sprite_index)
+                color = Vector4 { 1.0f, 1.0f, 0.2f, 0.25f };
+
+            if (Imgui::render_button(imgui_gen_id_with_secondary(i), ctx.sprite_sheet.sprites[i].tex_coords, z, color))
+                ctx.selected_sprite_index = (i != ctx.selected_sprite_index) ? i : -1;
+
             z -= 0.001f;
         }
     }

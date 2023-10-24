@@ -39,7 +39,7 @@ void render_sprite_list(const Application &app, Context &ctx, f32& z)
     {
         {   // Sprite name
             char buffer[128];
-            sprintf(buffer, "%c Sprite %d", (i == ctx.selected_sprite_index) ? '>' : ' ', i);
+            sprintf(buffer, "Sprite %d", i);
 
             const String text  = ref(buffer);
             const Vector2 size = Imgui::get_rendered_text_size(text, ctx.ui_font);
