@@ -621,7 +621,7 @@ void set_window_bounds(const Rect& rect)
 
 void reset_window_bounds()
 {
-    constexpr f32 window_padding = 30.0f;
+    constexpr f32 window_padding = 0.0f;
     ui_data.window_bounds = Rect {
         window_padding,
         window_padding,
