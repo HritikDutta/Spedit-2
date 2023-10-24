@@ -284,9 +284,6 @@ Font font_load_from_json(const Json::Document& document, const String atlas_path
 {
     Font font = {};
 
-    // Load font altas
-    font.atlas = texture_load_file(atlas_path, TextureSettings::default(), 4);
-
     // Load font data
     const Json::Value& data = document.start();
 
@@ -345,6 +342,12 @@ Font font_load_from_json(const Json::Document& document, const String atlas_path
     {
         s32 k_index = get_kerning_index(kerning[i][(ref("unicode1"))].int64(), kerning[i][(ref("unicode2"))].int64());
         put(font.kerning_table, k_index, (f32) kerning[i][ref("advance")].float64());
+    }
+
+    {   // Load font altas
+        TextureSettings settings = TextureSettings::default();
+        settings.min_filter = settings.max_filter = (font.type == Font::Type::HARDMASK) ? TextureSettings::Filter::NEAREST : TextureSettings::Filter::LINEAR;
+        font.atlas = texture_load_file(atlas_path, settings, 4);
     }
 
     return font;

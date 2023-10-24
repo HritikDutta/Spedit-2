@@ -22,12 +22,6 @@ void on_update(Application& app)
 {
     Context& ctx = *(Context*) app.data;
 
-    if (Input::get_key(Key::ESCAPE))
-    {
-        app.is_running = false;
-        return;
-    }
-
     {   // Drag Image
         if (Input::get_mouse_button(MouseButton::MIDDLE))
         {
