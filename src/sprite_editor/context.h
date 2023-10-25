@@ -47,7 +47,8 @@ struct Context
         } create_sprite;
     };
 
-    s32 selected_sprite_index = -1;
+    DynamicArray<s32> sprites_selected = {};
+    DynamicArray<s32> sprites_to_be_deleted = {};
 };
 
 bool context_init(Context& ctx, const Application& app);
@@ -55,3 +56,4 @@ void context_free(Context& ctx);
 
 // TODO: Handle errors for wrong initialization
 void context_update_on_image_load(Context& ctx, const String file_path, const TextureSettings settings);
+void context_delete_sprites(Context& ctx);

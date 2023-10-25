@@ -2,6 +2,8 @@
 
 #include "application/application.h"
 #include "containers/string.h"
+#include "containers/darray.h"
+#include "containers/algorithms.h"
 #include "core/logger.h"
 #include "engine/imgui.h"
 #include "fileio/fileio.h"
@@ -76,6 +78,11 @@ bool context_init(Context& ctx, const Application& app)
     {   // Initialize structs for spritesheet and animation
         ctx.sprite_sheet.sprites = make<DynamicArray<SpriteSheet::SpriteData>>();
         ctx.animations = make<DynamicArray<Animation2D>>();
+    }
+
+    {   // Other state things
+        ctx.sprites_selected = make<DynamicArray<s32>>();
+        ctx.sprites_to_be_deleted = make<DynamicArray<s32>>();
     }
 
     return true;
@@ -153,4 +160,15 @@ void context_update_on_image_load(Context& ctx, const String filepath, const Tex
     {   // Reset any control states
         ctx.input_state = EditorInputState::NONE;
     }
+}
+
+void context_delete_sprites(Context &ctx)
+{
+    // Sort the list first
+    sort(ctx.sprites_to_be_deleted);
+
+    for (int i = ctx.sprites_to_be_deleted.size - 1; i >= 0; i--)
+        remove(ctx.sprite_sheet.sprites, ctx.sprites_to_be_deleted[i]);
+
+    clear(ctx.sprites_to_be_deleted);
 }

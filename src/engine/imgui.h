@@ -83,12 +83,12 @@ Font font_load_from_bytes(const Bytes& bytes);
 Vector2 get_rendered_text_size(const String text, const Font& font, f32 size = -1.0f);
 Vector2 get_rendered_char_size(const char ch, const Font& font, f32 size = -1.0f);
 
-Rect get_window_bounds();
+Rect window_rect_get();
 
 void set_offset(f32 x, f32 y);
 void set_scale(f32 x, f32 y);
-void set_window_bounds(const Rect& rect);
-void reset_window_bounds();
+void window_rect_push(const Rect& rect);
+Rect window_rect_pop();
 
 // Set and Reset Callbacks
 void register_button_callback(const Callback& callback);

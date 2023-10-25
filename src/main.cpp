@@ -87,11 +87,20 @@ void on_update(Application& app)
         }
     }
 
-    {   // Controls for selected sprite
-        if (ctx.selected_sprite_index >= 0 && Input::get_key_down(Key::DELETE))
+    {   // Select all
+        if (Input::get_key(Key::CONTROL) && Input::get_key_down(Key::A))
         {
-            remove(ctx.sprite_sheet.sprites, ctx.selected_sprite_index);
-            ctx.selected_sprite_index = -1;
+            clear(ctx.sprites_selected);
+            for (int i = 0; i < ctx.sprite_sheet.sprites.size; i++)
+                append(ctx.sprites_selected, i);
+        }
+    }
+
+    {   // Controls for selected sprites
+        if (ctx.sprites_selected.size > 0 && Input::get_key_down(Key::DELETE))
+        {
+            append_many(ctx.sprites_to_be_deleted, ctx.sprites_selected.data, ctx.sprites_selected.size);
+            clear(ctx.sprites_selected);
         }
     }
 }
@@ -119,7 +128,7 @@ void on_render(Application& app)
         }
     }
 
-    {   // Show LMB hold rect for new sprites
+    {   // Show sprite rect being created
         if (ctx.input_state == EditorInputState::CREATE_SPRITE)
         {
             Imgui::render_rect(ctx.create_sprite.sprite_rect, z, Vector4 { 1.0f, 0.25f, 0.25f, 0.25f });
@@ -130,12 +139,27 @@ void on_render(Application& app)
     {   // Render the existing sprites
         for (int i = 0; i < ctx.sprite_sheet.sprites.size; i++)
         {
-            Vector4 color = Vector4 { 1.0f, 0.2f, 0.2f, 0.25f };
-            if (i == ctx.selected_sprite_index)
-                color = Vector4 { 1.0f, 1.0f, 0.2f, 0.25f };
+            const u64 sprite_index_in_selection = find(ctx.sprites_selected, i);
+            const bool is_sprite_selected = sprite_index_in_selection != ctx.sprites_selected.size;
 
+            const Vector4 color = is_sprite_selected ? Vector4 { 1.0f, 1.0f, 0.2f, 0.25f } : Vector4 { 1.0f, 0.2f, 0.2f, 0.25f };
             if (Imgui::render_button(imgui_gen_id_with_secondary(i), ctx.sprite_sheet.sprites[i].tex_coords, z, color))
-                ctx.selected_sprite_index = (i != ctx.selected_sprite_index) ? i : -1;
+            {
+                if (Input::get_key(Key::SHIFT))
+                {
+                    if (is_sprite_selected)
+                        remove(ctx.sprites_selected, sprite_index_in_selection);
+                    else
+                        append(ctx.sprites_selected, i);
+                }
+                else
+                {
+                    clear(ctx.sprites_selected);
+
+                    if (!is_sprite_selected)
+                        append(ctx.sprites_selected, i);
+                }
+            }
 
             z -= 0.001f;
         }
@@ -197,6 +221,9 @@ void on_render(Application& app)
     }
 
     Imgui::end();
+
+    // Needs to be called at the end of the frame!
+    context_delete_sprites(ctx);
 }
 
 void on_shutdown(Application& app)

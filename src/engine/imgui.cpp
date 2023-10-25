@@ -61,7 +61,7 @@ static struct
 
     Vector4 offset_v2;  // x,z and y,w are the same
     Vector4 scale_v2;   // x,z and y,w are the same
-    Rect    window_bounds;  // TODO: This should be a stack
+    DynamicArray<Rect> window_rects;
 
     Vertex* batch_shared_buffer = nullptr;
 
@@ -182,7 +182,20 @@ void init(const Application& app)
 
     set_offset(0, 0);
     set_scale(1, 1);
-    reset_window_bounds();
+
+    ui_data.window_rects = make<DynamicArray<Rect>>();
+
+    {   // Add entire window as window rect
+        constexpr f32 window_padding = 0.0f;
+        Rect window_rects = Rect {
+            window_padding,
+            window_padding,
+            active_app->window.ref_width  - window_padding,
+            active_app->window.ref_height - window_padding
+        };
+
+        window_rect_push(window_rects);
+    }
 
     ui_data.button_callbacks = make<DynamicArray<Callback>>();
 }
@@ -250,7 +263,11 @@ void update()
 {
     set_offset(0, 0);
     set_scale(1, 1);
-    reset_window_bounds();
+
+    gn_assert_with_message(ui_data.window_rects.size == 1, "Window rect stack wasn't cleared by the end of the frame!");
+
+    while (ui_data.window_rects.size > 1)
+        window_rect_pop();
 
     ui_data.state_prev_frame = ui_data.state_current_frame;
     ui_data.state_current_frame.hot = ui_data.state_current_frame.active = ui_data.state_current_frame.interacted = imgui_invalid_id;
@@ -486,19 +503,20 @@ static inline bool get_cropped_rect_for_window(const Rect& src, Rect& dest)
 {
     // Adjust rect so only the part that's inside the window is rendered.
     const Rect scaled_rect = rect_from_v4(ui_data.scale_v2 * src.v4 + ui_data.offset_v2);
+    const Rect& window_rect = window_rect_get();
 
     // Ignore quads that are outside the window
-    if (scaled_rect.right  <= ui_data.window_bounds.left ||
-        scaled_rect.left   >= ui_data.window_bounds.right ||
-        scaled_rect.top    >= ui_data.window_bounds.bottom ||
-        scaled_rect.bottom <= ui_data.window_bounds.top)
+    if (scaled_rect.right  <= window_rect.left ||
+        scaled_rect.left   >= window_rect.right ||
+        scaled_rect.top    >= window_rect.bottom ||
+        scaled_rect.bottom <= window_rect.top)
         return false;
 
     dest = Rect {
-        max(ui_data.window_bounds.left,   scaled_rect.left),
-        max(ui_data.window_bounds.top ,   scaled_rect.top),
-        min(ui_data.window_bounds.right,  scaled_rect.right),
-        min(ui_data.window_bounds.bottom, scaled_rect.bottom)
+        max(window_rect.left,   scaled_rect.left),
+        max(window_rect.top ,   scaled_rect.top),
+        min(window_rect.right,  scaled_rect.right),
+        min(window_rect.bottom, scaled_rect.bottom)
     };
 
     return true;
@@ -509,19 +527,20 @@ static inline bool get_cropped_rect_for_window(const Rect& src_rect, const Vecto
 {
     // Adjust rect so only the part that's inside the window is rendered.
     const Rect scaled_rect = rect_from_v4(ui_data.scale_v2 * src_rect.v4 + ui_data.offset_v2);
+    const Rect& window_rect = window_rect_get();
 
     // Ignore rects that are outside the window
-    if (scaled_rect.right  <= ui_data.window_bounds.left ||
-        scaled_rect.left   >= ui_data.window_bounds.right ||
-        scaled_rect.top    >= ui_data.window_bounds.bottom ||
-        scaled_rect.bottom <= ui_data.window_bounds.top)
+    if (scaled_rect.right  <= window_rect.left ||
+        scaled_rect.left   >= window_rect.right ||
+        scaled_rect.top    >= window_rect.bottom ||
+        scaled_rect.bottom <= window_rect.top)
         return false;
 
     dest_rect = Rect {
-        max(ui_data.window_bounds.left,   scaled_rect.left),
-        max(ui_data.window_bounds.top ,   scaled_rect.top),
-        min(ui_data.window_bounds.right,  scaled_rect.right),
-        min(ui_data.window_bounds.bottom, scaled_rect.bottom)
+        max(window_rect.left,   scaled_rect.left),
+        max(window_rect.top ,   scaled_rect.top),
+        min(window_rect.right,  scaled_rect.right),
+        min(window_rect.bottom, scaled_rect.bottom)
     };
 
     // Adjust texture coordinates to cropped rect
@@ -607,9 +626,9 @@ static void push_ui_rect(ImguiBatchData& batch, const Rect& rect, f32 z, const V
     batch.elem_count++;
 }
 
-Rect get_window_bounds()
+Rect window_rect_get()
 {
-    return ui_data.window_bounds;
+    return ui_data.window_rects[ui_data.window_rects.size - 1];
 }
 
 void set_offset(f32 x, f32 y)
@@ -622,20 +641,15 @@ void set_scale(f32 x, f32 y)
     ui_data.scale_v2 = Vector4 { x, y, x, y };
 }
 
-void set_window_bounds(const Rect& rect)
+void window_rect_push(const Rect& rect)
 {
-    ui_data.window_bounds = rect;
+    append(ui_data.window_rects, rect);
 }
 
-void reset_window_bounds()
+Rect window_rect_pop()
 {
-    constexpr f32 window_padding = 0.0f;
-    ui_data.window_bounds = Rect {
-        window_padding,
-        window_padding,
-        active_app->window.ref_width  - window_padding,
-        active_app->window.ref_height - window_padding
-    };
+    gn_assert_with_message(ui_data.window_rects.size > 1, "Trying to pop the base window rect!");
+    return pop(ui_data.window_rects);
 }
 
 void register_button_callback(const Callback& callback)
