@@ -60,11 +60,8 @@ static String copy_and_escape(const String source, ParserContext& context)
                 case 'n': ch = '\n'; break;
                 case 'r': ch = '\r'; break;
                 case 't': ch = '\t'; break;
-
-                // No need to change character in these cases
-                case '\"':
-                case '\\':
-                break;
+                case '\"': ch = '\"'; break;
+                case '\\': ch = '\\'; break;
 
                 default:
                 {
