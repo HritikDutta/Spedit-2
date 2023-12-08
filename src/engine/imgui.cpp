@@ -184,19 +184,6 @@ void init(const Application& app)
     set_scale(1, 1);
 
     ui_data.window_rects = make<DynamicArray<Rect>>();
-
-    {   // Add entire window as window rect
-        constexpr f32 window_padding = 0.0f;
-        Rect window_rects = Rect {
-            window_padding,
-            window_padding,
-            active_app->window.ref_width  - window_padding,
-            active_app->window.ref_height - window_padding
-        };
-
-        window_rect_push(window_rects);
-    }
-
     ui_data.button_callbacks = make<DynamicArray<Callback>>();
 }
 
@@ -264,10 +251,22 @@ void update()
     set_offset(0, 0);
     set_scale(1, 1);
 
-    gn_assert_with_message(ui_data.window_rects.size == 1, "Window rect stack wasn't cleared by the end of the frame!");
+    gn_assert_with_message(ui_data.window_rects.size <= 1, "Window rect stack wasn't cleared by the end of the frame!");
 
-    while (ui_data.window_rects.size > 1)
+    while (ui_data.window_rects.size > 0)
         window_rect_pop();
+        
+    {   // Add entire window as window rect
+        constexpr f32 window_padding = 0.0f;
+        Rect window_rects = Rect {
+            window_padding,
+            window_padding,
+            active_app->window.ref_width  - window_padding,
+            active_app->window.ref_height - window_padding
+        };
+
+        window_rect_push(window_rects);
+    }
 
     ui_data.state_prev_frame = ui_data.state_current_frame;
     ui_data.state_current_frame.hot = ui_data.state_current_frame.active = ui_data.state_current_frame.interacted = imgui_invalid_id;
@@ -648,7 +647,7 @@ void window_rect_push(const Rect& rect)
 
 Rect window_rect_pop()
 {
-    gn_assert_with_message(ui_data.window_rects.size > 1, "Trying to pop the base window rect!");
+    gn_assert_with_message(ui_data.window_rects.size > 0, "No window rects in stack!");
     return pop(ui_data.window_rects);
 }
 

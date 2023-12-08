@@ -92,6 +92,8 @@ void render_sprite_list(const Application &app, Context &ctx, f32& z)
                         top_left.y + btn_text_size.y + 2 * padding_y
                     };
 
+                    // TODO: Need to remove this sprite from selected ones as well
+
                     if (Imgui::render_text_button(imgui_gen_id_with_secondary(i), rect, btn_text, ctx.ui_font, Vector2 { padding_x, padding_y }, z))
                         append(ctx.sprites_to_be_deleted, i);
 

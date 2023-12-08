@@ -81,6 +81,8 @@ int main()
         graphics_clear_canvas();
 
         input_get_state(app);
+        
+        Imgui::update();
 
         app.on_update(app);
         app.on_render(app);
@@ -88,7 +90,6 @@ int main()
         graphics_swap_buffers(pstate);
         input_state_update(app);
 
-        Imgui::update();
         Audio::pool_sources();
     }
 
