@@ -37,6 +37,7 @@ set libs= shell32.lib                     ^
 rem Source
 cl %compile_flags% /c src/serialization/json/*.cpp %defines% %includes%   &^
 cl %compile_flags% /c src/serialization/binary/*.cpp %defines% %includes% &^
+cl %compile_flags% /c src/serialization/slz/*.cpp %defines% %includes%    &^
 cl %compile_flags% /c src/audio/*.cpp %defines% %includes%                &^
 cl %compile_flags% /c src/fileio/*.cpp %defines% %includes%               &^
 cl %compile_flags% /c src/graphics/*.cpp %defines% %includes%             &^

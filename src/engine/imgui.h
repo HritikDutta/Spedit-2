@@ -7,7 +7,7 @@
 #include "containers/function.h"
 #include "graphics/texture.h"
 #include "math/math.h"
-#include "serialization/json/json_document.h"
+#include "serialization/slz/slz_document.h"
 #include "rect.h"
 #include "sprite.h"
 
@@ -76,7 +76,7 @@ struct Font
 };
 
 // Deserialization
-Font font_load_from_json(const Json::Document& document, const String atlas_path);
+Font font_load_from_document(const Slz::Document& document, const String atlas_path);
 Font font_load_from_bytes(const Bytes& bytes);
 
 // Utility Functions

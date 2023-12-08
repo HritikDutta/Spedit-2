@@ -16,3 +16,21 @@ void to_string(String& str, u64 integer, u32 radix = 10);
 // Floats
 void to_string(String& str, f32 number, u32 after_decimal = 4);
 void to_string(String& str, f64 number, u32 after_decimal = 4);
+
+s64 int64_from_string(const String& str);
+
+inline bool is_alphabet(char ch)
+{
+    return ((ch >= 'a') && (ch <= 'z')) ||
+           ((ch >= 'A') && (ch <= 'Z'));
+}
+
+inline static bool is_digit(char ch)
+{
+    return (ch >= '0') && (ch <= '9');
+}
+
+inline static bool is_white_space(char ch)
+{
+    return ch == ' '  || ch == '\t' || ch == '\r' || ch == '\n';
+}

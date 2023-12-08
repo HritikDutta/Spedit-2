@@ -9,6 +9,7 @@
 #include "fileio/fileio.h"
 #include "graphics/texture.h"
 #include "platform/platform.h"
+#include "serialization/slz.h"
 #include "serialization/json.h"
 
 static char filename_buffer[256] = {};
@@ -18,14 +19,14 @@ bool context_init(Context& ctx, const Application& app)
     {   // Load UI Font
         String content = file_load_string(ref("assets/fonts/assistant-medium.font.json"));
 
-        Json::Document document = {};
+        Slz::Document document = {};
         if (!Json::parse_string(content, document))
         {
             print_error("Error parsing font json!");
             return false;
         }
 
-        ctx.ui_font = Imgui::font_load_from_json(document, ref("assets/fonts/assistant-medium.font.png"));
+        ctx.ui_font = Imgui::font_load_from_document(document, ref("assets/fonts/assistant-medium.font.png"));
 
         free(document);
         free(content);

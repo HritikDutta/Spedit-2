@@ -48,7 +48,7 @@ void print_to_file(FILE* file, const char* format, const T& item, Types... args)
         }
         
         // Encountered a %
-        if (format[offset + 1] != '%')  // print item if not followed by another %
+        if (offset > 0 || format[offset - 1] != '\\')  // print item if not preceded by a '\'
         {
             print_to_file(file, item);
             print_to_file(file, format + offset + 1, args...);

@@ -4,6 +4,7 @@
 #include "containers/string.h"
 #include "containers/string_builder.h"
 #include "core/logger.h"
+#include "serialization/slz.h"
 #include "rect.h"
 #include "sprite.h"
 
@@ -24,7 +25,7 @@ static Animation2D::LoopType get_loop_type_from_string(const String type_string)
     return type;
 }
 
-bool animation_load_from_json(const Json::Document& document, DynamicArray<Animation2D>& anims)
+bool animation_load_from_document(const Slz::Document& document, DynamicArray<Animation2D>& anims)
 {
     // TODO: Redo this after restructuring
     

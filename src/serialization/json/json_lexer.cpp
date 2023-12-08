@@ -1,30 +1,23 @@
 #include "json_lexer.h"
 
+#define SLZ_ERROR_PREFIX "Json"
+
 #include "core/types.h"
+#include "core/utils.h"
 #include "containers/darray.h"
 #include "containers/string.h"
 #include "math/common.h"
-#include "json_result.h"
-#include "json_debug_output.h"
+#include "serialization/slz/slz_error.h"
 
 namespace Json
 {
 
-inline bool is_alphabet(char ch)
-{
-    return ((ch >= 'a') && (ch <= 'z')) ||
-           ((ch >= 'A') && (ch <= 'Z'));
-}
-
-inline static bool is_digit(char ch)
-{
-    return (ch >= '0') && (ch <= '9');
-}
-
-bool lex(const String content, DynamicArray<Token>& tokens)
+bool tokenize(const String content, DynamicArray<Token>& tokens)
 {
     clear(tokens);
-    resize(tokens, max(2ui64, content.size / 10)); // Just an estimate
+    
+    if (tokens.size == 0)
+        resize(tokens, max(2ui64, content.size / 10)); // Just an estimate
 
     bool encountered_error = false;
     u64 current_index = 0;
@@ -60,7 +53,7 @@ bool lex(const String content, DynamicArray<Token>& tokens)
                 Token token;
                 token.index = current_index;
                 token.type  = (Token::Type) content[current_index];
-                token.value = ref(content.data + current_index, 1);
+                token.value = get_substring(content, current_index, 1);
 
                 append(tokens, token);
 
@@ -82,7 +75,7 @@ bool lex(const String content, DynamicArray<Token>& tokens)
                     // Reached EOF before closing string
                     if (index >= content.size)
                     {
-                        log_error("String was not closed! (line: %)", line_number(content, current_index));
+                        log_error(content, current_index + str_size - 1, "String was not closed!");
                         encountered_error = true;
                         break;
                     }
@@ -93,7 +86,7 @@ bool lex(const String content, DynamicArray<Token>& tokens)
                     // Reached new line before closing string
                     if (content[index] == '\n')
                     {
-                        log_error("Reached new line before closing string! (line: %)", line_number(content, index));
+                        log_error(content, current_index + str_size - 1, "Reached new line before closing string!");
                         encountered_error = true;
                         break;
                     }
@@ -108,7 +101,7 @@ bool lex(const String content, DynamicArray<Token>& tokens)
                 Token token;
                 token.index = current_index;
                 token.type  = Token::Type::STRING;
-                token.value = ref(content.data + current_index, str_size);
+                token.value = get_substring(content, current_index, str_size);
 
                 append(tokens, token);
 
@@ -134,7 +127,7 @@ bool lex(const String content, DynamicArray<Token>& tokens)
                     // - is not allowed between numbers (no math allowed!)
                     if (content[index] == '-')
                     {
-                        log_error("'-' sign can only be used at the start of a number! (line: %)", line_number(content, index));
+                        log_error(content, index, "'-' sign can only be used at the start of a number!");
                         encountered_error = true;
                     }
                     
@@ -143,7 +136,7 @@ bool lex(const String content, DynamicArray<Token>& tokens)
                     {
                         if (encountered_dot)
                         {
-                            log_error("'.' can only be used once in a number! (line: %)", line_number(content, index));
+                            log_error(content, index, "'.' can only be used once in a number!");
                             encountered_error = true;
                         }
 
@@ -159,7 +152,7 @@ bool lex(const String content, DynamicArray<Token>& tokens)
                 Token token;
                 token.index = current_index;
                 token.type  = encountered_dot ? Token::Type::FLOAT : Token::Type::INTEGER;
-                token.value = ref(content.data + current_index, number_size);
+                token.value = get_substring(content, current_index, number_size);
 
                 append(tokens, token);
 
@@ -173,7 +166,7 @@ bool lex(const String content, DynamicArray<Token>& tokens)
                 // Identifiers can only have alphabets
                 if (!is_alphabet(content[current_index]))
                 {
-                    log_error("Encountered invalid token! (found token: '%', line: %)", content[current_index], line_number(content, current_index));
+                    log_error(content, current_index, "Encountered invalid token! (found token: %)", content[current_index]);
                     encountered_error = true;
                     current_index++;
                     break;
@@ -194,7 +187,7 @@ bool lex(const String content, DynamicArray<Token>& tokens)
                 Token token;
                 token.index = current_index;
                 token.type  = Token::Type::IDENTIFIER;
-                token.value = ref(content.data + current_index, identifier_size);
+                token.value = get_substring(content, current_index, identifier_size);
 
                 append(tokens, token);
 
@@ -203,10 +196,12 @@ bool lex(const String content, DynamicArray<Token>& tokens)
         }
     }
 
-#ifdef GN_LOG_SERIALIZATION
-    if (!encountered_error)
-        lexer_debug_output(tokens);
-#endif // GN_DEBUG    
+    #ifdef GN_LOG_SERIALIZATION
+        print("LEXER OUTPUT (token count: %)\n", tokens.size);
+
+        for (u64 i = 0; i < tokens.size; i++)
+            print("    type_id: %, value: '%'\n", (int) tokens[i].type, tokens[i].value);
+    #endif // GN_LOG_SERIALIZATION
 
     return !encountered_error;
 }

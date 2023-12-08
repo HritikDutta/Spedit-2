@@ -186,3 +186,13 @@ void to_string(String& str, f64 number, u32 after_decimal)
         str.size += fraction_string.size + 1;
     }
 }
+
+s64 int64_from_string(const String& str)
+{
+    gn_assert_with_message(str.size <= 127, "Only strings smaller <= 127 characters in length can be converted to ints! (length: %)", str.size);
+
+    // Make string c-string compatible
+    char buffer[128] = {};
+    platform_copy_memory(buffer, str.data, str.size);   // WARNING! This can end up reading outside the allocated memory
+    return _atoi64(buffer);
+}

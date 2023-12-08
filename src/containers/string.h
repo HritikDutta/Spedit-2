@@ -16,13 +16,13 @@ struct String
     
     char& operator[](const u64 index)
     {
-        gn_assert_with_message(index < size, "Index out of bounds! (index: %, array size: %, string: %)", index, size, *this);
+        gn_assert_with_message(index < size, "Index out of bounds! (index: %, array size: %, string: '%')", index, size, *this);
         return data[index];
     }
 
     const char& operator[](const u64 index) const
     {
-        gn_assert_with_message(index < size, "Index out of bounds! (index: %, array size: %, string: %)", index, size, *this);
+        gn_assert_with_message(index < size, "Index out of bounds! (index: %, array size: %, string: '%')", index, size, *this);
         return data[index];
     }
 };

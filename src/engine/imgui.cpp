@@ -11,7 +11,7 @@
 #include "graphics/texture.h"
 #include "graphics/shader.h"
 #include "math/math.h"
-#include "serialization/json/json_document.h"
+#include "serialization/slz/slz_document.h"
 #include "serialization/binary.h"
 #include "batch.h"
 #include "rect.h"
@@ -297,25 +297,25 @@ static inline Font::Type get_font_type(const String type_string)
     return Font::Type::SDF;
 }
 
-Font font_load_from_json(const Json::Document& document, const String atlas_path)
+Font font_load_from_document(const Slz::Document& document, const String atlas_path)
 {
     Font font = {};
 
     // Load font data
-    const Json::Value& data = document.start();
+    const Slz::Value& data = document.start();
 
-    const Json::Object& atlas = data[ref("atlas")].object();
+    const Slz::Object& atlas = data[ref("atlas")].object();
     font.type = get_font_type(atlas[ref("type")].string());
     font.size = atlas[ref("size")].int64();
     const s32 texture_width  = atlas[ref("width")].int64();
     const s32 texture_height = atlas[ref("height")].int64();
 
-    const Json::Object& metrics = data[ref("metrics")].object();
+    const Slz::Object& metrics = data[ref("metrics")].object();
     font.line_height = metrics[ref("lineHeight")].float64();
     font.ascender    = metrics[ref("ascender")].float64();
     font.descender   = metrics[ref("descender")].float64();
 
-    const Json::Array& glyphs = data[ref("glyphs")].array();
+    const Slz::Array& glyphs = data[ref("glyphs")].array();
     for (u64 i = 0; i < glyphs.size(); i++)
     {
         const u32 unicode = glyphs[i][ref("unicode")].int64();
@@ -325,9 +325,9 @@ Font font_load_from_json(const Json::Document& document, const String atlas_path
         glyph_data.advance = glyphs[i][ref("advance")].float64();
 
         {   // Plane bounds
-            const Json::Value& plane_bounds = glyphs[i][ref("planeBounds")];
+            const Slz::Value& plane_bounds = glyphs[i][ref("planeBounds")];
 
-            if (plane_bounds.type() != Json::Type::NONE)
+            if (plane_bounds.type() != Slz::Type::NONE)
             {
                 glyph_data.plane_bounds = Vector4 {
                     (f32) plane_bounds[ref("left")].float64(),
@@ -339,9 +339,9 @@ Font font_load_from_json(const Json::Document& document, const String atlas_path
         }
 
         {   // Atlas bounds
-            const Json::Value& atlas_bounds = glyphs[i][ref("atlasBounds")];
+            const Slz::Value& atlas_bounds = glyphs[i][ref("atlasBounds")];
 
-            if (atlas_bounds.type() != Json::Type::NONE)
+            if (atlas_bounds.type() != Slz::Type::NONE)
             {
                 glyph_data.atlas_bounds = Vector4 {
                     (f32) atlas_bounds[ref("left")].float64()   / texture_width,
@@ -353,7 +353,7 @@ Font font_load_from_json(const Json::Document& document, const String atlas_path
         }
     }
 
-    const Json::Array& kerning = data[ref("kerning")].array();
+    const Slz::Array& kerning = data[ref("kerning")].array();
     font.kerning_table = make<Font::KerningTable>();
     for (u64 i = 0; i < kerning.size(); i++)
     {

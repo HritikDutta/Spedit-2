@@ -5,9 +5,9 @@
 #include "containers/darray.h"
 #include "containers/string.h"
 #include "containers/hash_table.h"
-#include "json_types.h"
+#include "slz_types.h"
 
-namespace Json
+namespace Slz
 {
 
 using ResourceIndex = u64;
@@ -34,7 +34,7 @@ struct DependencyNode
     };
 };
 
-const char* get_enum_name(Type type);
+const char* get_type_name(Type type);
 
 struct Value;
 
@@ -96,7 +96,7 @@ struct Value
         const auto& node = document->dependency_tree[tree_index];
         gn_assert_with_message(node.type == Type::INTEGER,
                                "Value doesn't correspond to a INTEGER resource! (actual node type: %)",
-                               get_enum_name(node.type));
+                               get_type_name(node.type));
 
         const auto& resource = document->resources[node.index];
         return resource.integer64;
@@ -108,7 +108,7 @@ struct Value
         const auto& node = document->dependency_tree[tree_index];
         gn_assert_with_message(node.type == Type::FLOAT || node.type == Type::INTEGER,
                                "Value doesn't correspond to a FLOAT or INTEGER resource! (actual node type: %)",
-                               get_enum_name(node.type));
+                               get_type_name(node.type));
 
         const auto& resource = document->resources[node.index];
         return (node.type == Type::FLOAT) ? resource.float64 : (f64) resource.integer64;
@@ -119,7 +119,7 @@ struct Value
         const auto& node = document->dependency_tree[tree_index];
         gn_assert_with_message(node.type == Type::BOOLEAN,
                                "Value doesn't correspond to a BOOLEAN resource! (actual node type: %)",
-                               get_enum_name(node.type));
+                               get_type_name(node.type));
 
         const auto& resource = document->resources[node.index];
         return resource.boolean;
@@ -130,7 +130,7 @@ struct Value
         const auto& node = document->dependency_tree[tree_index];
         gn_assert_with_message(node.type == Type::STRING,
                                "Value doesn't correspond to a STRING resource! (actual node type: %)",
-                               get_enum_name(node.type));
+                               get_type_name(node.type));
 
         const auto& resource = document->resources[node.index];
         return resource.string;
@@ -141,7 +141,7 @@ struct Value
         const auto node_type = document->dependency_tree[tree_index].type;
         gn_assert_with_message(node_type == Type::ARRAY,
                                "Value doesn't correspond to a ARRAY resource! (actual node type: %)",
-                               get_enum_name(node_type));
+                               get_type_name(node_type));
 
         // Since data layout is the same
         return *(Array*) (this);
@@ -152,7 +152,7 @@ struct Value
         const auto& node = document->dependency_tree[tree_index];
         gn_assert_with_message(node.type == Type::ARRAY,
                                "Value doesn't correspond to a ARRAY resource! (actual node type: %)",
-                               get_enum_name(node.type));
+                               get_type_name(node.type));
 
         return Value { document, node.array[index] };
     }
@@ -162,7 +162,7 @@ struct Value
         const auto node_type = document->dependency_tree[tree_index].type;
         gn_assert_with_message(node_type == Type::OBJECT,
                                "Value doesn't correspond to a OBJECT resource! (actual node type: %)",
-                               get_enum_name(node_type));
+                               get_type_name(node_type));
 
         // Since data layout is the same
         return *(Object*) (this);
@@ -174,7 +174,7 @@ struct Value
         DependencyNode node = document->dependency_tree[tree_index];
         gn_assert_with_message(node.type == Type::OBJECT,
                                "Value doesn't correspond to a OBJECT resource! (actual node type: %)",
-                               get_enum_name(node.type));
+                               get_type_name(node.type));
 
         auto elem = find(node.object, key);
 
@@ -186,11 +186,11 @@ struct Value
     }
 };
 
-} // namespace Json
+} // namespace Slz
 
-inline Json::Document make(Type<Json::Document>, u64 start_cap = 16)
+inline Slz::Document make(Type<Slz::Document>, u64 start_cap = 16)
 {
-    using namespace Json;
+    using namespace Slz;
 
     Document document;
 
@@ -200,26 +200,26 @@ inline Json::Document make(Type<Json::Document>, u64 start_cap = 16)
     return document;
 }
 
-inline void free(Json::Document& document)
+inline void free(Slz::Document& document)
 {
     for (u64 i = 0; i < document.dependency_tree.size; i++)
     {
         switch (document.dependency_tree[i].type)
         {
-            case Json::Type::STRING:
+            case Slz::Type::STRING:
             {
-                Json::ResourceIndex index = document.dependency_tree[i].index;
+                Slz::ResourceIndex index = document.dependency_tree[i].index;
                 free(document.resources[index].string);
             } break;
 
-            case Json::Type::ARRAY:
+            case Slz::Type::ARRAY:
             {
                 free(document.dependency_tree[i].array);
             } break;
 
-            case Json::Type::OBJECT:
+            case Slz::Type::OBJECT:
             {
-                Json::ObjectNode node = document.dependency_tree[i].object;
+                Slz::ObjectNode node = document.dependency_tree[i].object;
                 free_keys(node);    // Keys are all strings
                 free(node);
             } break;
